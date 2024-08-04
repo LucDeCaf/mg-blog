@@ -1,40 +1,46 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.22-alpine AS build
+FROM golang:1.22-bookworm AS build
 WORKDIR /app
 
-# Install npm for tailwindcss CSS generation
-RUN apk update
-RUN apk add nodejs npm
-RUN npm install --global tailwindcss@latest
+# Install build deps
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update
+RUN apt-get install --no-install-recommends --assume-yes \
+    curl \
+    gcc \
+    build-essential 
+RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 \
+    && chmod +x tailwindcss-linux-x64 \
+    && mv tailwindcss-linux-x64 tailwindcss
 
-# Ensure Go builds to the correct target
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-
-# Install deps
+# Copy project files
 COPY go.mod go.sum ./
-RUN go mod download
-
-# Build server
 COPY src src
-RUN go build -o build/server src/main.go
-
-# Generate CSS
 COPY templates templates
 COPY tailwind.config.js ./
-RUN npx tailwindcss -i src/css/index.css -o build/static/css/index.css --minify
 
-# Get JS
-COPY ./src/js ./build/static/js
+RUN mkdir build && mkdir build/static
+
+# Install Go deps
+RUN go mod download
+
+# Generate CSS
+RUN ./tailwindcss -i src/css/index.css -o build/static/css/index.css --minify
+
+# Build backend
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+RUN go build -o build/server src/main.go
 
 FROM scratch
 WORKDIR /
 
-EXPOSE 8080
-
 ENV GIN_MODE=release
 
-COPY --from=build /app/build .
-COPY templates /templates
+COPY --from=build /app/build /
+COPY templates templates
+COPY src/js static/js
 
-CMD ["/server"]
+EXPOSE 8080
+
+ENTRYPOINT ["/server"]
