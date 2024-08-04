@@ -40,6 +40,7 @@ ENV GIN_MODE=release
 COPY --from=build /app/build /
 COPY templates templates
 COPY src/js static/js
+COPY database.db /database.db
 
 EXPOSE 8080
 
