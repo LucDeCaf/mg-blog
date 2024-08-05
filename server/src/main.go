@@ -63,7 +63,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"msg": err.Error(),
+				"error": "internal server error",
 			})
 			return
 		}
@@ -98,7 +98,7 @@ func main() {
 			return
 		}
 
-		if err := addAuthor(a); err != nil {
+		if _, err := addAuthor(a); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"error": "internal server error",
 			})
@@ -145,11 +145,13 @@ func author(id int) (Author, error) {
 	return a, nil
 }
 
-func addAuthor(a Author) error {
-	_, err := db.Exec("INSERT INTO authors (first_name,last_name) VALUES (?,?);", a.FirstName, a.LastName)
+func addAuthor(a Author) (Author, error) {
+	r, err := db.Exec("INSERT INTO authors (first_name,last_name) VALUES (?,?);", a.FirstName, a.LastName)
 	if err != nil {
-		return err
+		return Author{}, err
 	}
+	id, _ := r.LastInsertId()
+	a, _ = author(int(id))
 
-	return nil
+	return a, nil
 }
