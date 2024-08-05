@@ -15,17 +15,17 @@ import (
 
 type Blog struct {
 	Id        int       `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	AuthorId  int       `json:"author_id"`
+	Title     string    `json:"title" binding:"required"`
+	Content   string    `json:"content" binding:"required"`
+	AuthorId  int       `json:"author_id" binding:"required"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Author struct {
 	Id        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
 }
 
 var db *sql.DB
@@ -93,14 +93,14 @@ func main() {
 
 		if err := ctx.BindJSON(&a); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
+				"error": "bad request",
 			})
 			return
 		}
 
 		if err := addAuthor(a); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
+				"error": "internal server error",
 			})
 			return
 		}
