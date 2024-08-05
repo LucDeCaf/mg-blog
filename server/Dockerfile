@@ -32,16 +32,16 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 RUN go build -o build/server src/main.go
 
-FROM scratch
-WORKDIR /
+FROM gcc:14.2-bookworm
+WORKDIR /app
 
 ENV GIN_MODE=release
+ENV BLOG_DB_PATH=/app/database.db
 
-COPY --from=build /app/build /
-COPY templates templates
-COPY src/js static/js
-COPY database.db /database.db
+COPY --from=build /app/build /app
+COPY templates /app/templates
+COPY src/js /app/static/js
 
 EXPOSE 8080
 
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["/app/server"]

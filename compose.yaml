@@ -1,8 +1,7 @@
 services:
   backend:
-    build:
-      dockerfile: Dockerfile
-      context: ./server
+    image: server
+    build: ./server
     volumes:
       - type: bind
         source: ${PWD}/server/database.db
@@ -10,7 +9,6 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"

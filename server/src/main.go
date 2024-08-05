@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +33,11 @@ var db *sql.DB
 func main() {
 	r := gin.Default()
 
-	database, err := sql.Open("sqlite3", "/database.db")
+	dbPath, found := os.LookupEnv("BLOG_DB_PATH")
+	if !found {
+		dbPath = "./database.db"
+	}
+	database, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,19 +63,25 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"msg": "internal server error",
+				"msg": err.Error(),
 			})
 			return
 		}
 		ctx.JSON(http.StatusOK, authors)
 	})
 	r.GET("/api/author/:authorId", func(ctx *gin.Context) {
-		id, _ := ctx.Params.Get("authorId")
+		idStr, _ := ctx.Params.Get("authorId")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+		}
 
 		a, err := author(id)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{
-				"error": "not found",
+				"error": err.Error(),
 			})
 			return
 		}
@@ -81,14 +93,14 @@ func main() {
 
 		if err := ctx.BindJSON(&a); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "bad request",
+				"error": err.Error(),
 			})
 			return
 		}
 
 		if err := addAuthor(a); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"error": "internal server error",
+				"error": err.Error(),
 			})
 			return
 		}
@@ -122,10 +134,11 @@ func authors() ([]Author, error) {
 	return authors, err
 }
 
-func author(id string) (Author, error) {
-	var a Author
+func author(id int) (Author, error) {
+	a := Author{}
+	a.Id = id
 
-	if err := db.QueryRow("SELECT (first_name,last_name) FROM authors WHERE id = ?;", id).Scan(&a.FirstName, &a.LastName); err != nil {
+	if err := db.QueryRow("SELECT first_name,last_name FROM authors WHERE id=?;", id).Scan(&a.FirstName, &a.LastName); err != nil {
 		return Author{}, err
 	}
 
@@ -133,7 +146,7 @@ func author(id string) (Author, error) {
 }
 
 func addAuthor(a Author) error {
-	_, err := db.Exec("INSERT INTO authors (first_name,last_name) VALUES (?;)", a.FirstName, a.LastName)
+	_, err := db.Exec("INSERT INTO authors (first_name,last_name) VALUES (?,?);", a.FirstName, a.LastName)
 	if err != nil {
 		return err
 	}
