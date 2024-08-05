@@ -28,7 +28,7 @@ RUN go mod download
 RUN ./tailwindcss -i src/css/index.css -o build/static/css/index.css --minify
 
 # Build backend
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=1
 ENV GOOS=linux
 RUN go build -o build/server src/main.go
 
