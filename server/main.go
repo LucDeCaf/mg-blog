@@ -8,6 +8,9 @@ import (
 	"os"
 	"strconv"
 
+	"mg-blog/author"
+	"mg-blog/blog"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -33,7 +36,15 @@ func main() {
 
 	// Page Routes
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{})
+		blogs, err := blog.GetBlogs(db)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{})
+			return
+		}
+
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"blogs": blogs,
+		})
 	})
 
 	// Special Routes
@@ -46,13 +57,14 @@ func main() {
 	r.POST("/api/author", apiPostAuthor)
 	r.GET("/api/author/:authorId", apiGetAuthor)
 	r.GET("/api/blog", apiGetBlogs)
+	r.POST("/api/blog", apiPostBlog)
 	r.GET("/api/blog/:blogId", apiGetBlog)
 
 	r.Run(":8080")
 }
 
 func apiGetAuthors(c *gin.Context) {
-	authors, err := GetAuthors()
+	authors, err := author.GetAuthors(db)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -64,7 +76,7 @@ func apiGetAuthors(c *gin.Context) {
 }
 
 func apiPostAuthor(c *gin.Context) {
-	var a Author
+	var a author.Author
 
 	if err := c.BindJSON(&a); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -73,7 +85,7 @@ func apiPostAuthor(c *gin.Context) {
 		return
 	}
 
-	if _, err := AddAuthor(a); err != nil {
+	if _, err := author.AddAuthor(db, a); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "internal server error",
 		})
@@ -93,7 +105,7 @@ func apiGetAuthor(c *gin.Context) {
 		return
 	}
 
-	a, err := GetAuthor(id)
+	a, err := author.GetAuthor(db, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -111,24 +123,47 @@ func apiGetBlog(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("bad value for param blogId '%v'", idStr),
 		})
+		return
 	}
 
-	b, err := GetBlog(id)
+	b, err := blog.GetBlog(db, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, b)
 }
 
+func apiPostBlog(c *gin.Context) {
+	var b blog.Blog
+
+	if err := c.BindJSON(&b); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "bad request",
+		})
+		return
+	}
+
+	if _, err := blog.AddBlog(db, b); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, b)
+}
+
 func apiGetBlogs(c *gin.Context) {
-	blogs, err := GetBlogs()
+	blogs, err := blog.GetBlogs(db)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, blogs)

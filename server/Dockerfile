@@ -18,9 +18,9 @@ RUN go mod download
 COPY . .
 RUN rm -rf build
 
-RUN ./tailwindcss -i src/css/index.css -o build/static/css/index.css --minify
+RUN ./tailwindcss -i static/css/index.css -o build/static/css/index.css --minify
 
-RUN CGO_ENABLED=1 GOOS=linux go build -o build/server src/main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -o build/server main.go
 
 FROM gcc:14.2-bookworm
 WORKDIR /app
@@ -31,7 +31,7 @@ ENV BLOG_DB_PATH=${BLOG_DB_PATH}
 
 COPY --from=build /app/build /app
 COPY templates /app/templates
-COPY src/js /app/static/js
+COPY static/js /app/static/js
 
 EXPOSE 8080
 

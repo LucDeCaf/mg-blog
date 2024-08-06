@@ -1,6 +1,10 @@
-package main
+package blog
 
-import "time"
+import (
+	"database/sql"
+	"fmt"
+	"time"
+)
 
 type Blog struct {
 	Id        int       `json:"id"`
@@ -11,7 +15,7 @@ type Blog struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func GetBlogs() ([]Blog, error) {
+func GetBlogs(db *sql.DB) ([]Blog, error) {
 	rows, err := db.Query("SELECT * FROM blog_posts;")
 	if err != nil {
 		return nil, err
@@ -44,7 +48,7 @@ func GetBlogs() ([]Blog, error) {
 	return blogs, nil
 }
 
-func GetBlog(id int) (Blog, error) {
+func GetBlog(db *sql.DB, id int) (Blog, error) {
 	b := Blog{Id: id}
 
 	if err := db.QueryRow("SELECT (title,content,author_id,created_at,updated_at) FROM blog_posts WHERE id=?;", id).Scan(
@@ -56,6 +60,25 @@ func GetBlog(id int) (Blog, error) {
 	); err != nil {
 		return Blog{}, err
 	}
+
+	return b, nil
+}
+
+func AddBlog(db *sql.DB, b Blog) (Blog, error) {
+	if db == nil {
+		return Blog{}, fmt.Errorf("db is null")
+	}
+
+	r, err := db.Exec("INSERT INTO blogs (title,content,author_id) VALUES (?,?,?);",
+		b.Title,
+		b.Content,
+		b.AuthorId,
+	)
+	if err != nil {
+		return Blog{}, err
+	}
+	id, _ := r.LastInsertId()
+	b, _ = GetBlog(db, int(id))
 
 	return b, nil
 }

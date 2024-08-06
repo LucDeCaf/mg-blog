@@ -1,4 +1,9 @@
-package main
+package author
+
+import (
+	"database/sql"
+	"fmt"
+)
 
 type Author struct {
 	Id        int    `json:"id"`
@@ -6,7 +11,11 @@ type Author struct {
 	LastName  string `json:"last_name" binding:"required"`
 }
 
-func GetAuthors() ([]Author, error) {
+func GetAuthors(db *sql.DB) ([]Author, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db is null")
+	}
+
 	rows, err := db.Query("SELECT * FROM authors;")
 	if err != nil {
 		return nil, err
@@ -32,7 +41,11 @@ func GetAuthors() ([]Author, error) {
 	return authors, err
 }
 
-func GetAuthor(id int) (Author, error) {
+func GetAuthor(db *sql.DB, id int) (Author, error) {
+	if db == nil {
+		return Author{}, fmt.Errorf("db is null")
+	}
+
 	a := Author{Id: id}
 
 	if err := db.QueryRow("SELECT first_name,last_name FROM authors WHERE id=?;", id).Scan(&a.FirstName, &a.LastName); err != nil {
@@ -42,13 +55,17 @@ func GetAuthor(id int) (Author, error) {
 	return a, nil
 }
 
-func AddAuthor(a Author) (Author, error) {
+func AddAuthor(db *sql.DB, a Author) (Author, error) {
+	if db == nil {
+		return Author{}, fmt.Errorf("db is null")
+	}
+
 	r, err := db.Exec("INSERT INTO authors (first_name,last_name) VALUES (?,?);", a.FirstName, a.LastName)
 	if err != nil {
 		return Author{}, err
 	}
 	id, _ := r.LastInsertId()
-	a, _ = GetAuthor(int(id))
+	a, _ = GetAuthor(db, int(id))
 
 	return a, nil
 }
