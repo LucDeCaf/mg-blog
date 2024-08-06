@@ -18,4 +18,3 @@ CREATE TABLE blog_posts (
 -- +goose Down
 DROP TABLE authors;
 DROP TABLE blog_posts;
-DROP TRIGGER update_blog_post_updated_at;

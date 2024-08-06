@@ -16,7 +16,7 @@ type Blog struct {
 }
 
 func GetBlogs(db *sql.DB) ([]Blog, error) {
-	rows, err := db.Query("SELECT * FROM blog_posts;")
+	rows, err := db.Query("SELECT * FROM blogs;")
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func GetBlogs(db *sql.DB) ([]Blog, error) {
 func GetBlog(db *sql.DB, id int) (Blog, error) {
 	b := Blog{Id: id}
 
-	if err := db.QueryRow("SELECT (title,content,author_id,created_at,updated_at) FROM blog_posts WHERE id=?;", id).Scan(
+	if err := db.QueryRow("SELECT (title,content,author_id,created_at,updated_at) FROM blogs WHERE id=?;", id).Scan(
 		&b.Title,
 		&b.Content,
 		&b.AuthorId,
@@ -64,6 +64,7 @@ func GetBlog(db *sql.DB, id int) (Blog, error) {
 	return b, nil
 }
 
+// TODO test this func
 func AddBlog(db *sql.DB, b Blog) (Blog, error) {
 	if db == nil {
 		return Blog{}, fmt.Errorf("db is null")
@@ -77,8 +78,16 @@ func AddBlog(db *sql.DB, b Blog) (Blog, error) {
 	if err != nil {
 		return Blog{}, err
 	}
+
 	id, _ := r.LastInsertId()
-	b, _ = GetBlog(db, int(id))
+	if err != nil {
+		return Blog{}, err
+	}
+
+	b, err = GetBlog(db, int(id))
+	if err != nil {
+		return Blog{}, err
+	}
 
 	return b, nil
 }

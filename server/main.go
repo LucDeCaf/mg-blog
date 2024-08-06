@@ -68,7 +68,7 @@ func apiGetAuthors(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
+			"error": err.Error(),
 		})
 		return
 	}
@@ -80,14 +80,14 @@ func apiPostAuthor(c *gin.Context) {
 
 	if err := c.BindJSON(&a); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad request",
+			"error": err.Error(),
 		})
 		return
 	}
 
 	if _, err := author.AddAuthor(db, a); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
+			"error": err.Error(),
 		})
 		return
 	}
@@ -121,7 +121,7 @@ func apiGetBlog(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("bad value for param blogId '%v'", idStr),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -142,14 +142,15 @@ func apiPostBlog(c *gin.Context) {
 
 	if err := c.BindJSON(&b); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad request",
+			"error": err.Error(),
 		})
 		return
 	}
 
-	if _, err := blog.AddBlog(db, b); err != nil {
+	b, err := blog.AddBlog(db, b)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
+			"error": err.Error(),
 		})
 		return
 	}
