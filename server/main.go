@@ -8,8 +8,8 @@ import (
 	"os"
 	"strconv"
 
-	"mg-blog/author"
-	"mg-blog/blog"
+	"github.com/LucDeCaf/mg-blog/author"
+	"github.com/LucDeCaf/mg-blog/blog"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
