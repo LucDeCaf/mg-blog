@@ -46,10 +46,21 @@ func main() {
 			"blogs": blogs,
 		})
 	})
+	r.GET("/blog/:id", func(c *gin.Context) {
+		idStr := c.Params.ByName("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{})
+			return
+		}
 
-	// Special Routes
-	r.NoRoute(func(c *gin.Context) {
-		c.HTML(http.StatusNotFound, "404.html", gin.H{})
+		b, err := blog.GetBlog(db, id)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{})
+			return
+		}
+
+		c.HTML(http.StatusOK, "blog.html", b)
 	})
 
 	// API Routes
