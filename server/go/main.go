@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,7 +20,15 @@ var db *sql.DB
 func main() {
 	r := gin.Default()
 
-	database, err := sql.Open("sqlite3", "database.db")
+	dbPathPtr := flag.String(
+		"database-path",
+		"database.db",
+		"path to db, defaults to 'database.db'",
+	)
+
+	flag.Parse()
+
+	database, err := sql.Open("sqlite3", *dbPathPtr)
 	if err != nil {
 		log.Fatal(err)
 	}
