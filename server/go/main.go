@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
-	"github.com/LucDeCaf/mg-blog/author"
-	"github.com/LucDeCaf/mg-blog/blog"
+	"mg-blog/author"
+	"mg-blog/blog"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
@@ -20,11 +19,7 @@ var db *sql.DB
 func main() {
 	r := gin.Default()
 
-	dbPath, found := os.LookupEnv("BLOG_DB_PATH")
-	if !found {
-		dbPath = "./database.db"
-	}
-	database, err := sql.Open("sqlite3", dbPath)
+	database, err := sql.Open("sqlite3", "database.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +27,7 @@ func main() {
 
 	// Load static files
 	r.LoadHTMLGlob("templates/*")
-	r.Static("/static", "./static")
+	r.Static("/static", "static")
 
 	// Page Routes
 	r.GET("/", func(c *gin.Context) {

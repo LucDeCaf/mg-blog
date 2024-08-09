@@ -1,4 +1,4 @@
-module github.com/LucDeCaf/mg-blog
+module mg-blog
 
 go 1.22.5
 

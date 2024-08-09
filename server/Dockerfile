@@ -12,20 +12,24 @@ RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/downlo
     && chmod +x tailwindcss-linux-x64 \
     && mv tailwindcss-linux-x64 tailwindcss
 
-COPY go.mod go.sum ./
-RUN go mod download
+COPY go/go.mod go/go.sum go/
+RUN cd go && go mod download
 
-COPY . .
-RUN rm -rf build
+COPY go go
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+RUN cd go && go build -o /app/build/server main.go
 
+COPY static static
+COPY templates templates
+COPY tailwind.config.js ./
 RUN ./tailwindcss -i static/css/index.css -o build/static/css/index.css --minify
-
-RUN CGO_ENABLED=1 GOOS=linux go build -o build/server main.go
 
 FROM gcc:14.2-bookworm
 WORKDIR /app
 
 ENV GIN_MODE=release
+
 ARG BLOG_DB_PATH=/app/database.db
 ENV BLOG_DB_PATH=${BLOG_DB_PATH}
 
