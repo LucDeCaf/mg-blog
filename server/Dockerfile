@@ -10,27 +10,29 @@ RUN apt-get install --no-install-recommends --assume-yes \
     curl \
     gcc \
     build-essential
+RUN npm install tailwindcss@latest
 
 COPY go/go.mod go/go.sum go/
 RUN cd go && go mod download
 
+COPY Makefile ./
+
+# Server executable
 COPY go go
 ENV CGO_ENABLED=1
 ENV GOOS=linux
-RUN cd go && go build -o /app/build/server main.go
+RUN make --always-make go
 
-COPY static static
-COPY templates templates
+# CSS (need html files to cull unused styles)
 COPY tailwind.config.js ./
-RUN npx tailwindcss -i static/css/index.css -o build/static/css/index.css --minify
+COPY templates templates
+COPY static static
+RUN make css
 
 FROM gcc:14.2-bookworm
 WORKDIR /app
 
 ENV GIN_MODE=release
-
-ARG BLOG_DB_PATH=/app/database.db
-ENV BLOG_DB_PATH=${BLOG_DB_PATH}
 
 COPY --from=build /app/build /app
 COPY templates /app/templates
@@ -38,4 +40,4 @@ COPY static/js /app/static/js
 
 EXPOSE 8080
 
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["/app/server", "-database-path=/app/database.db"]
