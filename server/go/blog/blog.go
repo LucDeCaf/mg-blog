@@ -3,16 +3,17 @@ package blog
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"time"
 )
 
 type Blog struct {
-	Id        int       `json:"id"`
-	Title     string    `json:"title" binding:"required"`
-	Content   string    `json:"content" binding:"required"`
-	AuthorId  int       `json:"author_id" binding:"required"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id        int           `json:"id"`
+	Title     string        `json:"title" binding:"required"`
+	Content   template.HTML `json:"content" binding:"required"`
+	AuthorId  int           `json:"author_id" binding:"required"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 func GetBlogs(db *sql.DB) ([]Blog, error) {
@@ -53,7 +54,7 @@ func GetBlog(db *sql.DB, id int) (Blog, error) {
 
 	if err := db.QueryRow("SELECT title, content, author_id, created_at, updated_at FROM blogs WHERE id=?;", id).Scan(
 		&b.Title,
-		&b.Content,
+		(*string)(&b.Content),
 		&b.AuthorId,
 		&b.CreatedAt,
 		&b.UpdatedAt,
