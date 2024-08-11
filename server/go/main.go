@@ -38,6 +38,9 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "static")
 
+	// Middleware
+	r.Use(gin.Logger())
+
 	// Page Routes
 	r.GET("/", func(c *gin.Context) {
 		blogs, err := blog.GetBlogs(db)
@@ -67,13 +70,13 @@ func main() {
 		c.HTML(http.StatusOK, "blog.html", b)
 	})
 
-	// API Routes
+	// API Routes (removing post for safety)
 	r.GET("/api/author", apiGetAuthors)
-	r.POST("/api/author", apiPostAuthor)
 	r.GET("/api/author/:authorId", apiGetAuthor)
+	// r.POST("/api/author", apiPostAuthor)
 	r.GET("/api/blog", apiGetBlogs)
-	r.POST("/api/blog", apiPostBlog)
 	r.GET("/api/blog/:blogId", apiGetBlog)
+	// r.POST("/api/blog", apiPostBlog)
 
 	r.Run(":8080")
 }
